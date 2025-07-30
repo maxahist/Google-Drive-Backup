@@ -1,4 +1,11 @@
 @echo off
+:check_net
+ping -n 1 8.8.8.8 >nul || (
+    timeout /t 30 /nobreak
+    goto :check_net
+)
+
+@echo off
 chcp 65001 > nul
 set PYTHONIOENCODING=UTF-8
 setlocal EnableDelayedExpansion

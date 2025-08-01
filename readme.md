@@ -1,13 +1,15 @@
 # Google Drive Download Script
 
-This script allows download exel files from Google Drive 
-The script docs.py: 
+This script allows download exel files from Google Drive
+
+<ins> The script docs.py </ins>
 - Checks for exel files, write down file name and id into g_files.txt 
 - Then download these files into 'Google_Drive_Backup {date}' folder
-The script d_to_ftp:
+
+<ins> The script d_to_ftp </ins>
 - Upload file to the server via ftp
 
-For Windows you may run google_docs.bat to do both
+<ins>For Windows</ins> you may run google_docs.bat to do both
 
 
 For usage you need to: 

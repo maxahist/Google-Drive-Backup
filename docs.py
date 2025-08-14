@@ -11,6 +11,7 @@ import re
 import datetime
 import requests
 import ftplib
+import logging
 
 
 CLIENT_SECRET_FILE = "credentials.json"
@@ -18,6 +19,13 @@ TOKEN_FILE = "token.json"
 LIST_FILE = "g_files.txt"
 DOWNLOAD_DIR = f"Google_Drive_Backup {datetime.datetime.now().date()}"
 SERVICE_ACCOUNT_FILE = "service-account.json"
+
+def setup_logging() -> None:
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(message)s',
+        datefmt='%H:%M:%S'
+    )
 
 
 def authorize() -> Credentials:
@@ -36,15 +44,15 @@ def write_file_list(creds: Credentials) -> None:
     items = results.get("files", [])
 
     if not items:
-        print("Нет файлов для скачивания")
+        logging.info("Нет файлов для скачивания")
         return
-    print("Файлы:")
+    logging.info("Файлы:")
 
     with open("g_files.txt", "w", encoding="UTF-8") as f:
         for item in items:
             if item["mimeType"] == "application/vnd.google-apps.spreadsheet":
                 f.write(f"{item['name']} _|_ {item['id']}" + "\n")
-                print(f"{item['name']} ({item['id']})")
+                logging.info(f"{item['name']} ({item['id']})")
 
 
 def load_file_list() -> list:
@@ -53,7 +61,7 @@ def load_file_list() -> list:
         for line in f:
             name, file_id = line.strip().split(" _|_ ")
             files.append({"name": name, "id": file_id})
-    print(f"Найдено файлов для скачивания: {len(files)}")
+    logging.info(f"Найдено файлов для скачивания: {len(files)}")
     return files
 
 def get_creds(scopes: list, file: str) -> Credentials:
@@ -63,11 +71,13 @@ def get_creds(scopes: list, file: str) -> Credentials:
         creds = Credentials.from_authorized_user_file(file, scopes)
 
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
+        try:
             creds.refresh(Request())
-        else:
+        except Exception as e:
+            logging.error(f"Возникла ошибка: {e}")
             flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, scopes)
             creds = flow.run_local_server(port=0)
+        
         with open(file, "w") as token:
             token.write(creds.to_json())
     return creds
@@ -97,11 +107,13 @@ def download_excel_sheets_api(files: list) -> None:
         with open(f"{file_path}.xlsx", "wb") as f:
             f.write(response.content)
 
-        print(f"Файл сохранен: {file['name']}.xlsx")
-    print("\n" + "Загрузка завершена!")
+        logging.info(f"Файл сохранен: {file['name']}.xlsx")
+    logging.info("\n" + "Загрузка завершена!")
 
 
 def main():
+    setup_logging()
+    
     creds = authorize()
 
     write_file_list(creds)
